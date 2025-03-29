@@ -1,13 +1,21 @@
 package statut;
 
-public final class StatutVitesseAttaque extends Statut {
-    private int nbAttaque = 2;
+import canard.Canard;
 
-    public StatutVitesseAttaque(int duree) {
-        super("Augmentation vitesse d'attaque", duree);
+public final class StatutVitesseAttaque extends Statut {
+    private int nbAttaque = 1;
+
+    public StatutVitesseAttaque(int duree, Canard canard) {
+        super("Augmentation vitesse d'attaque", duree, canard);
     }
 
     public int getNbAttaque() {
         return nbAttaque;
+    }
+
+    @Override
+    public void appliquerEffet() {
+        nbAttaque++;
+        super.appliquerEffet();
     }
 }

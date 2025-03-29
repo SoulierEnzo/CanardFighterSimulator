@@ -2,6 +2,9 @@ package canard;
 
 import capacite.CapaciteSpeciale;
 import statut.Statut;
+import statut.StatutBrulure;
+import statut.StatutGel;
+import statut.StatutVitesseAttaque;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +21,7 @@ public abstract class Canard {
     private int pointsAttaque;
     private TypeCanard type;
     private List<CapaciteSpeciale> capaciteSpeciales = new ArrayList<CapaciteSpeciale>();
+    private List<CapaciteSpeciale> capaciteSpecialesUtilisee = new ArrayList<CapaciteSpeciale>();
     private List<Statut> statuts = new ArrayList<Statut>();
 
     public Canard(String nom, int pointsDeVie, int pointsAttaque, TypeCanard type) {
@@ -29,7 +33,7 @@ public abstract class Canard {
     }
 
     public void subirDegats(int degats) {
-        pointsAttaque -= degats;
+        pointsDeVie -= degats;
     }
 
     public void regenerer(int pointDeVie) {
@@ -45,23 +49,71 @@ public abstract class Canard {
         );
     }
 
-    public void utiliserCapaciteSpeciale(int capaciteSpeciale) {
-        utiliserCapaciteSpeciale(capaciteSpeciale, null);
-    }
-
     public void utiliserCapaciteSpeciale(int capaciteSpeciale, Canard cible) {
-        if (capaciteSpeciale < 0 || capaciteSpeciale >= capaciteSpeciales.size()) {
+        if (capaciteSpeciale < 1 || capaciteSpeciale > capaciteSpeciales.size()) {
             throw new IndexOutOfBoundsException("Capacite speciale innexistante");
         }
-        capaciteSpeciales.get(capaciteSpeciale).activer(this, cible);
+        CapaciteSpeciale capacite = capaciteSpeciales.remove(capaciteSpeciale - 1);
+        capacite.activer(this, cible);
+        capaciteSpecialesUtilisee.add(capacite);
     }
 
     public void attribuerCapaciteSpeciale(CapaciteSpeciale capaciteSpeciale) {
         capaciteSpeciales.add(capaciteSpeciale);
     }
 
+    public int nombreCapaciteSpeciale() {
+        return capaciteSpeciales.size();
+    }
+
+    public String listerCapaciteSpeciale() {
+        int choix = 1;
+        String out = "";
+        for (CapaciteSpeciale capaciteSpeciale : capaciteSpeciales) {
+            out += choix + ". " + capaciteSpeciale.getNom();
+            choix++;
+        }
+        return out;
+    }
+
     public void appliquerStatut(Statut statut) {
         statuts.add(statut);
+    }
+
+    public int appliquerEffetStatuts() {
+        int nbAttaques = 1;
+        ArrayList<Statut> statutARetirer = new ArrayList<>();
+        for (Statut statut : statuts) {
+            statut.appliquerEffet();
+            switch (statut) {
+                case StatutBrulure statutBrulure:
+                    break;
+                case StatutGel statutGel:
+                    nbAttaques = 0;
+                    break;
+                case StatutVitesseAttaque statutVitesseAttaque:
+                    // Si statut gel alors pas d'attaque
+                    if (nbAttaques != 0) {
+                        nbAttaques = statutVitesseAttaque.getNbAttaque();
+                    }
+                    break;
+            }
+            if (statut.getDuree() == 0) {
+                statutARetirer.add(statut);
+            }
+        }
+        for (Statut statut : statutARetirer) {
+            statuts.remove(statut);
+        }
+        return nbAttaques;
+    }
+
+    public void reinitialiser() {
+        this.pointsDeVie = pointsDeVieMax;
+        while (!capaciteSpecialesUtilisee.isEmpty()) {
+            capaciteSpeciales.add(capaciteSpecialesUtilisee.removeFirst());
+        }
+        statuts.clear();
     }
 
     public boolean estKO() {
